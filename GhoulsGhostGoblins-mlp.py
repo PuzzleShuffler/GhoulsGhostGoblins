@@ -6,7 +6,7 @@ import seaborn as sns
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras.layers import Dense, Dropout
 from keras.models import Sequential
-from keras.utils import np_utils
+from keras.utils import to_categorical
 from sklearn import set_config
 from sklearn.compose import ColumnTransformer
 from sklearn.experimental import enable_iterative_imputer  # noqa
@@ -70,14 +70,16 @@ le = LabelEncoder()
 transformed_y_train = le.fit_transform(y_train)
 transformed_y_val = le.fit_transform(y_val)
 
-transformed_y_train = np_utils.to_categorical(transformed_y_train)
-transformed_y_val = np_utils.to_categorical(transformed_y_val)
+transformed_y_train = to_categorical(transformed_y_train)
+transformed_y_val = to_categorical(transformed_y_val)
 
 ##### Define Model #####
+input_dim = transformed_X_train.shape[1]
 def keras_model():
     # create model
     model = Sequential()
-    model.add(Dense(21, input_dim=transformed_X_train.shape[1], kernel_initializer='normal', activation='relu'))
+    model.add(keras.Input(shape=(input_dim,)))
+    model.add(Dense(21, kernel_initializer='normal', activation='relu'))
     model.add(Dropout(0.30))
     model.add(Dense(18, kernel_initializer='normal', activation='relu'))
     model.add(Dropout(0.30))
@@ -96,7 +98,7 @@ def keras_model():
 
 # Early Stop Parameters & Model Checkpoint
 es = EarlyStopping(monitor='loss', mode='min', verbose=1, patience=50)
-mc = ModelCheckpoint('models/best_mlp_model.h5', monitor='loss', mode='min', verbose=1, save_best_only=True)
+mc = ModelCheckpoint('models/best_mlp_model.keras', monitor='loss', mode='min', verbose=1, save_best_only=True)
 
 training_model = keras_model()
 
@@ -128,7 +130,7 @@ plt.show()
 #### Loading Best Model #####
 # Load Weights
 best_model = keras_model()
-best_model.load_weights('models/best_mlp_model.h5')
+best_model.load_weights('models/best_mlp_model.keras')
 
 scores = best_model.evaluate(transformed_X_val, transformed_y_val)
 scores
